@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>yomu-test — audit log</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      nav {
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.4rem 0.6rem;
+        border-bottom: 1px solid #ddd;
+        vertical-align: top;
+      }
+      th {
+        background: #f0f0f0;
+      }
+      tr.flagged {
+        background: #fff3f3;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: #f0f0f0;
+        padding: 0.5rem;
+        max-height: 400px;
+        overflow: auto;
+      }
+      button {
+        cursor: pointer;
+      }
+      #controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      #clear-all-btn {
+        margin-left: auto;
+        color: #c62828;
+        border: 1px solid #c62828;
+        background: white;
+        border-radius: 0.4rem;
+        padding: 0.3rem 0.7rem;
+      }
+      #clear-all-btn:hover {
+        background: #c62828;
+        color: white;
+      }
+      #pagination {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <nav><a href="/">← Dev Harness</a></nav>
+    <h1>Audit Log</h1>
+
+    <div id="logged-out">
+      <a href="/auth/google">Log in with Google</a>
+    </div>
+
+    <div id="logged-in" style="display: none">
+      <div id="controls">
+        <label><input type="checkbox" id="flagged-only" /> Show only flagged</label>
+        <button id="clear-all-btn">🗑️ Clear All Results</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Word</th>
+            <th>Grade</th>
+            <th>Azure Correct</th>
+            <th>Accuracy Score</th>
+            <th>Flagged by User</th>
+            <th>Audio</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+
+      <div id="pagination">
+        <button id="prev-page">← Prev</button>
+        <span id="page-label"></span>
+        <button id="next-page">Next →</button>
+      </div>
+    </div>
+
+    <script src="/audit.js"></script>
+  </body>
+</html>

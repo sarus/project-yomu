@@ -1,0 +1,1 @@
+ALTER TABLE "word_attempts" RENAME COLUMN "confidence" TO "accuracy_score";

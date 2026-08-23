@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>yomu-test harness</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 640px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #ddd;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: #f0f0f0;
+        padding: 0.5rem;
+      }
+      #word-list button {
+        margin: 0.15rem;
+      }
+      button, select, a.button {
+        cursor: pointer;
+      }
+      .spinner {
+        display: none;
+        width: 1em;
+        height: 1em;
+        margin-left: 0.5em;
+        border: 2px solid #ccc;
+        border-top-color: #333;
+        border-radius: 50%;
+        vertical-align: middle;
+        animation: spin 0.7s linear infinite;
+      }
+      .spinner.active {
+        display: inline-block;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <nav><a href="/child.html">🧒 Child Mode →</a> | <a href="/audit.html">📋 Audit Log →</a></nav>
+    <h1>yomu-test harness</h1>
+
+    <div id="logged-out">
+      <a href="/auth/google">Log in with Google</a>
+    </div>
+
+    <div id="logged-in" style="display: none">
+      <button id="logout">Log out</button>
+
+      <section>
+        <h2>Settings</h2>
+        <label>
+          <input type="checkbox" id="confetti-enabled" />
+          Confetti on correct answer (Child Mode)
+        </label>
+        <br />
+        <button id="replay-orby-intro">Reset Orby intro (Child Mode)</button>
+      </section>
+
+      <section>
+        <h2>Words</h2>
+        <select id="grade">
+          <option value="all">all</option>
+          <optgroup label="Dolch (by grade)">
+            <option value="pre-k">pre-k</option>
+            <option value="kindergarten">kindergarten</option>
+            <option value="1st">1st</option>
+            <option value="2nd">2nd</option>
+            <option value="3rd">3rd</option>
+          </optgroup>
+          <optgroup label="Fry Instant Words">
+            <option value="fry-1">Fry List 1</option>
+            <option value="fry-2">Fry List 2</option>
+            <option value="fry-3">Fry List 3</option>
+            <option value="fry-4">Fry List 4</option>
+            <option value="fry-5">Fry List 5</option>
+            <option value="fry-6">Fry List 6</option>
+            <option value="fry-7">Fry List 7</option>
+            <option value="fry-8">Fry List 8</option>
+            <option value="fry-9">Fry List 9</option>
+            <option value="fry-10">Fry List 10</option>
+          </optgroup>
+        </select>
+        <button id="load-words">Load Words</button>
+        <p>
+          Selected word: <span id="selected-word">(none)</span>
+          <button id="read-word-native">🔊 Read Word (browser)</button>
+          <select id="azure-voice">
+            <option value="jenny">Jenny (adult female)</option>
+            <option value="aria">Aria (adult female)</option>
+            <option value="guy">Guy (adult male)</option>
+            <option value="davis">Davis (adult male)</option>
+            <option value="ana">Ana (child)</option>
+          </select>
+          <button id="read-word-azure">🔊 Read Word (Azure)</button>
+        </p>
+        <div id="word-list"></div>
+        <pre id="words-output"></pre>
+      </section>
+
+      <section>
+        <h2>Microphone</h2>
+        <select id="mic-device"></select>
+        <button id="test-mic">Test Mic</button>
+        <button id="stop-test-mic" disabled>Stop Test</button>
+        <p>Input level: <meter id="mic-level" min="0" max="100" value="0"></meter></p>
+      </section>
+
+      <section>
+        <h2>Record attempt</h2>
+        <button id="start-recording">Start</button>
+        <button id="stop-recording" disabled>Stop</button>
+        <p>Status: <span id="record-status">Not recording</span></p>
+        <br />
+        <audio id="playback" controls></audio>
+        <br />
+        <button id="submit-attempt">Submit Attempt</button>
+        <span id="submit-spinner" class="spinner"></span>
+        <pre id="submit-output"></pre>
+      </section>
+
+      <section>
+        <h2>History / Summary</h2>
+        <button id="load-history">Load History</button>
+        <button id="load-summary">Load Summary</button>
+        <pre id="history-output"></pre>
+        <pre id="summary-output"></pre>
+      </section>
+    </div>
+
+    <script src="/recorder.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

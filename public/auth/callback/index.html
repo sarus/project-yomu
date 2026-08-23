@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Logging in…</title>
+  </head>
+  <body>
+    <p>Logging in…</p>
+    <script>
+      const token = new URLSearchParams(location.search).get('token');
+      if (token) localStorage.setItem('yomu_token', token);
+      location.href = '/';
+    </script>
+  </body>
+</html>
