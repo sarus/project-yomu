@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for project-yomu on 2026-08-23T12:00:01Z
+# fly.toml app configuration file generated for project-yomu on 2026-08-23T23:41:25Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -15,7 +15,7 @@ primary_region = 'nrt'
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = 'stop'
+  auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
@@ -24,3 +24,11 @@ primary_region = 'nrt'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
+  memory = '256mb'
+  processes = ['app']
+  size = 'shared-cpu-1x'
