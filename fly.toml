@@ -1,26 +1,26 @@
-app = "yomu-test"
-primary_region = "iad"
+# fly.toml app configuration file generated for project-yomu on 2026-08-23T12:00:01Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'project-yomu'
+primary_region = 'nrt'
 
 [build]
 
 [env]
-  PORT = "3000"
-  NODE_ENV = "production"
+  NODE_ENV = 'production'
+  PORT = '3000'
 
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
 [[vm]]
-  cpu_kind = "shared"
+  cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
-
-# Secrets (DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID/SECRET, AZURE_SPEECH_KEY, etc.)
-# are NOT set here — set them with:
-#   fly secrets set DATABASE_URL=... JWT_SECRET=... GOOGLE_CLIENT_ID=... \
-#     GOOGLE_CLIENT_SECRET=... AZURE_SPEECH_KEY=... AZURE_SPEECH_REGION=...
