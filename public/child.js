@@ -202,13 +202,14 @@ const recorder = createRecorder({
     const orbState = ORB_STATUS_MAP[status];
     if (orbState) setOrbState(orbState, rms);
   },
-  onStop: async (wavBlob) => {
+  onStop: async ({ native: wavBlob }) => {
     setOrbState('processing');
 
     const grade = document.getElementById('grade').value;
     const formData = new FormData();
     formData.append('word', currentWord);
     formData.append('gradeLevel', grade);
+    formData.append('pipeline', 'tier0-native');
     formData.append('audio', wavBlob, 'attempt.wav');
 
     const data = await fetchJSON('/attempts', { method: 'POST', body: formData });

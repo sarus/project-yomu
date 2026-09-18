@@ -24,12 +24,18 @@ interface AuthedRequest extends FastifyRequest {
 export class AttemptsController {
   constructor(private readonly attempts: AttemptsService) {}
 
-  // Expects multipart/form-data: fields "word" and "gradeLevel", file field "audio" (wav, 16kHz PCM).
+  // Expects multipart/form-data: fields "word", "gradeLevel", "pipeline"
+  // (which client-side audio pipeline produced this recording — e.g.
+  // 'tier0-native' or 'tier1-gtcrn') and optional "comparisonGroupId"
+  // (links the 2 submissions from a single "compare both pipelines"
+  // recording), file field "audio" (wav, 16kHz PCM).
   @Post()
   async submit(@Req() req: AuthedRequest) {
     const parts = req.parts();
     let word: string | undefined;
     let gradeLevel: string | undefined;
+    let pipeline: string | undefined;
+    let comparisonGroupId: string | undefined;
     let audioBuffer: Buffer | undefined;
 
     for await (const part of parts) {
@@ -39,14 +45,25 @@ export class AttemptsController {
         word = String(part.value);
       } else if (part.type === 'field' && part.fieldname === 'gradeLevel') {
         gradeLevel = String(part.value);
+      } else if (part.type === 'field' && part.fieldname === 'pipeline') {
+        pipeline = String(part.value);
+      } else if (part.type === 'field' && part.fieldname === 'comparisonGroupId') {
+        comparisonGroupId = String(part.value);
       }
     }
 
-    if (!word || !audioBuffer) {
-      throw new BadRequestException('Both "word" field and "audio" file are required');
+    if (!word || !audioBuffer || !pipeline) {
+      throw new BadRequestException('"word", "pipeline" fields and "audio" file are required');
     }
 
-    return this.attempts.submitAttempt(req.user.userId, word, gradeLevel, audioBuffer);
+    return this.attempts.submitAttempt(
+      req.user.userId,
+      word,
+      gradeLevel,
+      audioBuffer,
+      pipeline,
+      comparisonGroupId,
+    );
   }
 
   @Delete()

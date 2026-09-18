@@ -45,6 +45,14 @@ export const wordAttempts = pgTable('word_attempts', {
   provider: varchar('provider', { length: 50 }).notNull(),
   rawProviderResponse: jsonb('raw_provider_response'),
 
+  // Which client-side audio pipeline produced the submitted audio — lets us
+  // A/B noise-suppression approaches. 'unspecified' backfills rows written
+  // before this column existed, when no pipeline was tracked at all.
+  pipeline: varchar('pipeline', { length: 20 }).notNull().default('unspecified'),
+  // Shared by the 2 rows produced from one "compare both pipelines" recording
+  // (same spoken word, submitted twice) — null for a normal single-pipeline attempt.
+  comparisonGroupId: varchar('comparison_group_id', { length: 36 }),
+
   // Raw submitted audio (WAV) and a user-facing "Azure got this wrong" flag —
   // testing-phase-only fields for building a dataset to tune CORRECT_THRESHOLD.
   // bytea is fine for now at this data volume; revisit with object storage if it grows.

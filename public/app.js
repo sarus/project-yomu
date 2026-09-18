@@ -3,6 +3,19 @@ const MIC_DEVICE_KEY = 'yomu_mic_device';
 const TTS_VOICE_KEY = 'yomu_tts_voice'; // TODO: move to a per-user DB setting once accounts need it
 const CONFETTI_ENABLED_KEY = 'yomu_confetti_enabled'; // read by child.js
 const ORBY_INTRO_KEY = 'yomu_orby_intro_played'; // read by child.js
+const PIPELINE_MODE_KEY = 'yomu_pipeline_mode';
+
+// Maps a recorder pipeline mode to the { pipeline, resultKey } pairs it should
+// submit as. 'both' submits twice (linked by a shared comparisonGroupId) so
+// the same spoken word gets scored by both pipelines for comparison.
+const PIPELINE_SUBMISSIONS = {
+  native: [{ resultKey: 'native', pipeline: 'tier0-native' }],
+  gtcrn: [{ resultKey: 'gtcrn', pipeline: 'tier1-gtcrn' }],
+  both: [
+    { resultKey: 'native', pipeline: 'tier0-native' },
+    { resultKey: 'gtcrn', pipeline: 'tier1-gtcrn' },
+  ],
+};
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -143,7 +156,7 @@ function stopMicTest() {
 // --- Recording: capture mic audio and encode as 16kHz mono 16-bit PCM WAV ---
 // (shared pipeline lives in recorder.js)
 
-let recordedWavBlob = null;
+let recordedResults = null; // { native?: Blob, gtcrn?: Blob }, set by recorder.js's onStop
 
 function setRecordStatus(text) {
   document.getElementById('record-status').textContent = text;
@@ -156,46 +169,99 @@ const RECORD_STATUS_TEXT = {
   stopped: 'Not recording',
 };
 
+function getSelectedPipelineMode() {
+  return document.getElementById('pipeline-mode').value;
+}
+
 const recorder = createRecorder({
   getDeviceConstraint: getSelectedDeviceConstraint,
+  getMode: getSelectedPipelineMode,
   onStatus: (status) => setRecordStatus(RECORD_STATUS_TEXT[status] ?? status),
-  onStop: (wavBlob) => {
-    recordedWavBlob = wavBlob;
-    document.getElementById('playback').src = URL.createObjectURL(wavBlob);
+  onStop: (results) => {
+    recordedResults = results;
+    document.getElementById('playback-native').src = results.native ? URL.createObjectURL(results.native) : '';
+    document.getElementById('playback-gtcrn').src = results.gtcrn ? URL.createObjectURL(results.gtcrn) : '';
     document.getElementById('start-recording').disabled = false;
     document.getElementById('stop-recording').disabled = true;
   },
 });
 
 function startRecording() {
-  recordedWavBlob = null;
+  recordedResults = null;
   document.getElementById('start-recording').disabled = true;
   document.getElementById('stop-recording').disabled = false;
-  recorder.start();
+  // 'Both' mode opens 2 concurrent getUserMedia() streams — this can reject
+  // (e.g. a device that won't allow a 2nd concurrent capture), so surface
+  // that instead of leaving the UI stuck in "recording" state.
+  recorder.start().catch((err) => {
+    alert(`Failed to start recording: ${err.message}`);
+    document.getElementById('start-recording').disabled = false;
+    document.getElementById('stop-recording').disabled = true;
+  });
 }
 
 function stopRecording() {
   recorder.stop();
 }
 
+function renderComparisonTable(rows) {
+  const table = document.getElementById('comparison-table');
+  const body = document.getElementById('comparison-table-body');
+  body.innerHTML = '';
+  if (rows.length < 2) {
+    table.style.display = 'none';
+    return;
+  }
+  for (const { pipeline, data } of rows) {
+    const tr = document.createElement('tr');
+    const cell = (text) => {
+      const td = document.createElement('td');
+      td.style.padding = '0.25rem 0.5rem';
+      td.textContent = text;
+      return td;
+    };
+    tr.append(
+      cell(pipeline),
+      cell(data.correct ? '✅' : '❌'),
+      cell(data.accuracyScore ?? '—'),
+      cell(data.recognizedText ?? ''),
+    );
+    body.appendChild(tr);
+  }
+  table.style.display = '';
+}
+
 async function submitAttempt() {
-  if (!selectedWord || !recordedWavBlob) {
+  const mode = getSelectedPipelineMode();
+  const submissions = PIPELINE_SUBMISSIONS[mode].filter((s) => recordedResults?.[s.resultKey]);
+  if (!selectedWord || submissions.length === 0) {
     alert('Select a word and record an attempt first.');
     return;
   }
+
   const grade = document.getElementById('grade').value;
-  const formData = new FormData();
-  formData.append('word', selectedWord);
-  if (grade !== 'all') formData.append('gradeLevel', grade);
-  formData.append('audio', recordedWavBlob, 'attempt.wav');
+  // Only tag a comparisonGroupId when this is genuinely a multi-pipeline
+  // submission of the same recording — a single-pipeline submit has nothing to link.
+  const comparisonGroupId = submissions.length > 1 ? crypto.randomUUID() : undefined;
 
   const submitButton = document.getElementById('submit-attempt');
   const spinner = document.getElementById('submit-spinner');
   submitButton.disabled = true;
   spinner.classList.add('active');
   try {
-    const data = await fetchJSON('/attempts', { method: 'POST', body: formData });
-    document.getElementById('submit-output').textContent = JSON.stringify(data, null, 2);
+    const results = await Promise.all(
+      submissions.map(({ resultKey, pipeline }) => {
+        const formData = new FormData();
+        formData.append('word', selectedWord);
+        if (grade !== 'all') formData.append('gradeLevel', grade);
+        formData.append('pipeline', pipeline);
+        if (comparisonGroupId) formData.append('comparisonGroupId', comparisonGroupId);
+        formData.append('audio', recordedResults[resultKey], 'attempt.wav');
+        return fetchJSON('/attempts', { method: 'POST', body: formData });
+      }),
+    );
+    document.getElementById('submit-output').textContent = JSON.stringify(results, null, 2);
+    renderComparisonTable(results.map((data, i) => ({ pipeline: submissions[i].pipeline, data })));
   } finally {
     submitButton.disabled = false;
     spinner.classList.remove('active');
@@ -224,6 +290,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (storedVoice) voiceSelect.value = storedVoice; // no-op if no longer a valid option
   voiceSelect.addEventListener('change', (e) => {
     localStorage.setItem(TTS_VOICE_KEY, e.target.value);
+  });
+  const pipelineModeSelect = document.getElementById('pipeline-mode');
+  const storedPipelineMode = localStorage.getItem(PIPELINE_MODE_KEY);
+  if (storedPipelineMode) pipelineModeSelect.value = storedPipelineMode; // no-op if no longer a valid option
+  pipelineModeSelect.addEventListener('change', (e) => {
+    localStorage.setItem(PIPELINE_MODE_KEY, e.target.value);
   });
   const confettiCheckbox = document.getElementById('confetti-enabled');
   confettiCheckbox.checked = localStorage.getItem(CONFETTI_ENABLED_KEY) !== 'false'; // default on

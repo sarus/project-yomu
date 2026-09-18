@@ -117,14 +117,35 @@
 
       <section>
         <h2>Record attempt</h2>
+        <p>
+          Audio pipeline:
+          <select id="pipeline-mode">
+            <option value="native">Tier 0 — Native (browser noise suppression)</option>
+            <option value="gtcrn">Tier 1 — GTCRN (neural denoiser)</option>
+            <option value="both">Both (compare)</option>
+          </select>
+        </p>
         <button id="start-recording">Start</button>
         <button id="stop-recording" disabled>Stop</button>
         <p>Status: <span id="record-status">Not recording</span></p>
         <br />
-        <audio id="playback" controls></audio>
-        <br />
+        <p>
+          Native: <audio id="playback-native" controls></audio><br />
+          GTCRN: <audio id="playback-gtcrn" controls></audio>
+        </p>
         <button id="submit-attempt">Submit Attempt</button>
         <span id="submit-spinner" class="spinner"></span>
+        <table id="comparison-table" style="display: none; border-collapse: collapse; margin: 0.75rem 0">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #ccc">Pipeline</th>
+              <th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #ccc">Correct</th>
+              <th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #ccc">Accuracy</th>
+              <th style="text-align: left; padding: 0.25rem 0.5rem; border-bottom: 1px solid #ccc">Recognized</th>
+            </tr>
+          </thead>
+          <tbody id="comparison-table-body"></tbody>
+        </table>
         <pre id="submit-output"></pre>
       </section>
 

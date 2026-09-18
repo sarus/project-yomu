@@ -12,7 +12,14 @@ export class AttemptsService {
     @Inject(ASR_PROVIDER) private readonly asr: SpeechAssessmentProvider,
   ) {}
 
-  async submitAttempt(userId: number, word: string, gradeLevel: string | undefined, audio: Buffer) {
+  async submitAttempt(
+    userId: number,
+    word: string,
+    gradeLevel: string | undefined,
+    audio: Buffer,
+    pipeline: string,
+    comparisonGroupId?: string,
+  ) {
     const result = await this.asr.assessWord(audio, word);
 
     const [saved] = await this.db
@@ -28,6 +35,8 @@ export class AttemptsService {
         provider: result.provider,
         rawProviderResponse: result.rawProviderResponse,
         audioData: audio,
+        pipeline,
+        comparisonGroupId: comparisonGroupId ?? null,
       })
       .returning();
 
@@ -40,6 +49,8 @@ export class AttemptsService {
       accuracyScore: saved.accuracyScore,
       recognizedText: saved.recognizedText,
       phonemeBreakdown: saved.phonemeBreakdown,
+      pipeline: saved.pipeline,
+      comparisonGroupId: saved.comparisonGroupId,
     };
   }
 
@@ -81,6 +92,8 @@ export class AttemptsService {
           accuracyScore: schema.wordAttempts.accuracyScore,
           recognizedText: schema.wordAttempts.recognizedText,
           flaggedIncorrect: schema.wordAttempts.flaggedIncorrect,
+          pipeline: schema.wordAttempts.pipeline,
+          comparisonGroupId: schema.wordAttempts.comparisonGroupId,
           rawProviderResponse: schema.wordAttempts.rawProviderResponse,
           createdAt: schema.wordAttempts.createdAt,
           userEmail: schema.users.email,
